@@ -534,11 +534,6 @@ CheckAttributeType(const char *attname,
 		 * many other places would require anti-recursion defenses before it
 		 * would be safe to allow tables to contain their own rowtype.
 		 */
-		if (list_member_oid(containing_rowtypes, atttypid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				errmsg("composite type %s cannot be made a member of itself",
-					   format_type_be(atttypid))));
 
 		containing_rowtypes = lcons_oid(atttypid, containing_rowtypes);
 
