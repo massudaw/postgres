@@ -533,8 +533,13 @@ CheckAttributeType(const char *attname,
 		 * this (just return without complaint, if so) but it's not clear how
 		 * many other places would require anti-recursion defenses before it
 		 * would be safe to allow tables to contain their own rowtype.
-		 */
+		if (list_member_oid(containing_rowtypes, atttypid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				errmsg("composite type %s cannot be made a member of itself",
+					   format_type_be(atttypid))));
 
+		 */
 		containing_rowtypes = lcons_oid(atttypid, containing_rowtypes);
 
 		relation = relation_open(get_typ_typrelid(atttypid), AccessShareLock);
@@ -547,6 +552,7 @@ CheckAttributeType(const char *attname,
 
 			if (attr->attisdropped)
 				continue;
+		  if (!list_member_oid(containing_rowtypes, atttypid))
 			CheckAttributeType(NameStr(attr->attname),
 							   attr->atttypid, attr->attcollation,
 							   containing_rowtypes,
