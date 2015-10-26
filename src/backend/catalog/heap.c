@@ -552,7 +552,7 @@ CheckAttributeType(const char *attname,
 
 			if (attr->attisdropped)
 				continue;
-		  if (!list_member_oid(containing_rowtypes, atttypid))
+		  if (attr->atttypid != atttypid)
 			CheckAttributeType(NameStr(attr->attname),
 							   attr->atttypid, attr->attcollation,
 							   containing_rowtypes,

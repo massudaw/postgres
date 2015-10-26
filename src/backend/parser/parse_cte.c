@@ -126,12 +126,12 @@ transformWithClause(ParseState *pstate, WithClause *withClause)
 		{
 			CommonTableExpr *cte2 = (CommonTableExpr *) lfirst(rest);
 
-			if (strcmp(cte->ctename, cte2->ctename) == 0)
+			/*if (strcmp(cte->ctename, cte2->ctename) == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_ALIAS),
 					errmsg("WITH query name \"%s\" specified more than once",
 						   cte2->ctename),
-						 parser_errposition(pstate, cte2->location)));
+						 parser_errposition(pstate, cte2->location)));*/
 		}
 
 		cte->cterecursive = false;
@@ -675,7 +675,7 @@ checkWellFormedRecursion(CteState *cstate)
 		cstate->context = RECURSION_OK;
 		checkWellFormedRecursionWalker((Node *) stmt->rarg, cstate);
 		Assert(cstate->innerwiths == NIL);
-		if (cstate->selfrefcount != 1)	/* shouldn't happen */
+		if (cstate->selfrefcount == 0)	/* shouldn't happen */
 			elog(ERROR, "missing recursive reference");
 
 		/* WITH mustn't contain self-reference, either */
@@ -772,13 +772,7 @@ checkWellFormedRecursionWalker(Node *node, CteState *cstate)
 							 parser_errposition(cstate->pstate,
 												rv->location)));
 				/* Count references */
-				if (++(cstate->selfrefcount) > 1)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_RECURSION),
-							 errmsg("recursive reference to query \"%s\" must not appear more than once",
-									mycte->ctename),
-							 parser_errposition(cstate->pstate,
-												rv->location)));
+				++(cstate->selfrefcount);
 			}
 		}
 		return false;
@@ -854,14 +848,12 @@ checkWellFormedRecursionWalker(Node *node, CteState *cstate)
 				checkWellFormedRecursionWalker(j->rarg, cstate);
 				checkWellFormedRecursionWalker(j->quals, cstate);
 				break;
-			case JOIN_LEFT:
+      case JOIN_LEFT:
 				checkWellFormedRecursionWalker(j->larg, cstate);
-				if (save_context == RECURSION_OK)
-					cstate->context = RECURSION_OUTERJOIN;
 				checkWellFormedRecursionWalker(j->rarg, cstate);
 				cstate->context = save_context;
 				checkWellFormedRecursionWalker(j->quals, cstate);
-				break;
+				break; 
 			case JOIN_FULL:
 				if (save_context == RECURSION_OK)
 					cstate->context = RECURSION_OUTERJOIN;

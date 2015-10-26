@@ -48,14 +48,33 @@ WorkTableScanNext(WorkTableScanState *node)
 	 * tuplestore, nor do we need to tell tuplestore_gettupleslot to copy.
 	 */
 	Assert(ScanDirectionIsForward(node->ss.ps.state->es_direction));
+  tuplestorestate = node->tuplestorestate;
 
-	tuplestorestate = node->rustate->working_table;
+	/*
+	 * If first time through, and we need a tuplestore, initialize it.
+	 */
+	if (tuplestorestate == NULL || (node->iter != node->rustate->iter) )
+	{
+    tuplestorestate = node->rustate->working_table;
+    node->tuplestorestate = node->rustate->working_table;
+
+
+			node->ptrno = tuplestore_alloc_read_pointer(tuplestorestate,
+            0);
+
+      node->iter = node->rustate->iter;
+	}else{
+  }
+  tuplestore_select_read_pointer(tuplestorestate,node->ptrno);
+
 
 	/*
 	 * Get the next tuple from tuplestore. Return NULL if no more tuples.
 	 */
 	slot = node->ss.ss_ScanTupleSlot;
-	(void) tuplestore_gettupleslot(tuplestorestate, true, false, slot);
+	(void) tuplestore_gettupleslot(tuplestorestate, true, true, slot);
+
+
 	return slot;
 }
 
@@ -192,6 +211,11 @@ ExecEndWorkTableScan(WorkTableScanState *node)
 	 * Free exprcontext
 	 */
 	ExecFreeExprContext(&node->ss.ps);
+  if (node->tuplestorestate != NULL){
+    tuplestore_select_read_pointer(node->tuplestorestate,0);
+    node->tuplestorestate = NULL ;
+    node->ptrno = 0;
+  }
 
 	/*
 	 * clean out the tuple table
@@ -210,7 +234,6 @@ void
 ExecReScanWorkTableScan(WorkTableScanState *node)
 {
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-
 	ExecScanReScan(&node->ss);
 
 	/* No need (or way) to rescan if ExecWorkTableScan not called yet */

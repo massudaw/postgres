@@ -117,6 +117,7 @@ ExecRecursiveUnion(RecursiveUnionState *node)
 			if (node->intermediate_empty)
 				break;
 
+
 			/* done with old working table ... */
 			tuplestore_end(node->working_table);
 
@@ -131,13 +132,14 @@ ExecRecursiveUnion(RecursiveUnionState *node)
 			/* reset the recursive term */
 			innerPlan->chgParam = bms_add_member(innerPlan->chgParam,
 												 plan->wtParam);
-
+      node->iter++;
 			/* and continue fetching from recursive term */
 			continue;
 		}
 
 		if (plan->numCols > 0)
 		{
+      elog(DEBUG1, "plan cols > 0");
 			/* Find or build hashtable entry for this tuple's group */
 			LookupTupleHashEntry(node->hashtable, slot, &isnew);
 			/* Must reset temp context after each hashtable lookup */

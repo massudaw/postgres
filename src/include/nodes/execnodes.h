@@ -1189,6 +1189,7 @@ typedef struct RecursiveUnionState
 	PlanState	ps;				/* its first field is NodeTag */
 	bool		recursing;
 	bool		intermediate_empty;
+  int iter;
 	Tuplestorestate *working_table;
 	Tuplestorestate *intermediate_table;
 	/* Remaining fields are unused in UNION ALL case */
@@ -1568,6 +1569,9 @@ typedef struct WorkTableScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
 	RecursiveUnionState *rustate;
+  int ptrno;
+  int iter;
+	Tuplestorestate *tuplestorestate;
 } WorkTableScanState;
 
 /* ----------------

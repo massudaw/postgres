@@ -174,6 +174,28 @@ WITH q1(x,y) AS (
   )
 SELECT count(*) FROM q1 WHERE y > (SELECT sum(y)/100 FROM q1 qsub);
 
+
+with  recursive base(k1,r1,r2) as  (values (1,null,null),(2,null,null),(3,null,null),(7,5,1),(6,2,3),(4,1,null),(5,6,4))
+, x(k1,k2,k3,r1,r2) as ( 
+  select k1,null::record,null ::record ,r1 ,r2 from base
+      union all 
+      (select b.k1,case when x1.r1 is not null or x1.r2 is not  null then null else (coalesce(nullif(row(x1.k1,x1.k2,x1.k3),(null::integer,null::record,null::record)),b.k2)) end ,case when (x2.r1 is not null or x2.r2 is not  null ) then null else coalesce(nullif(row(x2.k1,x2.k2,x2.k3),(null::integer,null::record,null::record)),b.k3) end,case when x1 is null or  x1.r1 is not null or x1.r2 is not null then b.r1  else null end , case when x2 is null then b.r2  else null end 
+        from x as b 
+          left join x as x1 on x1.k1=b.r1
+          left join x as x2 on  x2.k1=b.r2
+          where  (( x2.r2 is not null  and x2.r1 is not null) and (x1.k1 is null))
+              or (( x1.r2 is not null  and x1.r1 is not null) and (x2.k1 is null))
+              or (x1.k1 is not null and x1.r2 is null and x1.r1 is null) 
+              or (x2.k1 is not null and x2.r1 is null and x2.r2 is null)
+       union all
+        select b.k1,b.k2,b.k3,b.r1,b.r2 from  x b
+          left join x as x1 on x1.k1=b.r1
+          left join x as x2 on  x2.k1=b.r2
+       where   (x1.k1 is not null and (x1.r2 is not null or x1.r1 is not null)) 
+           and (x2.k1 is not null and (x2.r1 is not null or x2.r2 is not null))
+      )
+    ) select k1,k2,k3 from x  where r1 is null and r2 is null order by k1;
+
 -- via a VIEW
 CREATE TEMPORARY VIEW vsubdepartment AS
 	WITH RECURSIVE subdepartment AS

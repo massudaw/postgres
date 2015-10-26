@@ -479,6 +479,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 */
 	StrNCpy(relname, stmt->relation->relname, NAMEDATALEN);
 
+	 elog(DEBUG1, "relname creation init : %s",
+				  relname);
 	/*
 	 * Check consistency of arguments
 	 */
@@ -685,6 +687,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 */
 	CommandCounterIncrement();
 
+	 elog(DEBUG1, "relname created : %s",
+				  relname);
 	/*
 	 * Open the new relation and acquire exclusive lock on it.  This isn't
 	 * really necessary for locking out other backends (since they can't see

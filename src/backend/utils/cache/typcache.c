@@ -1113,15 +1113,18 @@ cache_record_field_properties(TypeCacheEntry *typentry)
 			if (tupdesc->attrs[i]->attisdropped)
 				continue;
 
-			fieldentry = lookup_type_cache(tupdesc->attrs[i]->atttypid,
+      if (tupdesc->attrs[i]->atttypid != typentry->type_id )  
+      { fieldentry = lookup_type_cache(tupdesc->attrs[i]->atttypid,
 										   TYPECACHE_EQ_OPR |
 										   TYPECACHE_CMP_PROC);
-			if (!OidIsValid(fieldentry->eq_opr))
-				newflags &= ~TCFLAGS_HAVE_FIELD_EQUALITY;
-			if (!OidIsValid(fieldentry->cmp_proc))
-				newflags &= ~TCFLAGS_HAVE_FIELD_COMPARE;
-
-			/* We can drop out of the loop once we disprove all bits */
+       if (!OidIsValid(fieldentry->eq_opr))
+				 newflags &= ~TCFLAGS_HAVE_FIELD_EQUALITY;
+			 if (!OidIsValid(fieldentry->cmp_proc))
+				 newflags &= ~TCFLAGS_HAVE_FIELD_COMPARE;
+      }
+      else 
+        fieldentry = typentry;
+						/* We can drop out of the loop once we disprove all bits */
 			if (newflags == 0)
 				break;
 		}
